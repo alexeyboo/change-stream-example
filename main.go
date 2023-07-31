@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -62,40 +61,40 @@ func listenToDBChangeStream(
 			// fmt.Println("Delete operation detected : Unable to pull changes as its record is deleted")
 			fmt.Println("Delete operation detected")
 		}
-
+		fmt.Println(raw)
 		// Print out the document that was inserted or updated
-		if DbEvent.OperationType == "insert" || DbEvent.OperationType == "update" {
-			// Find the mongodb document based on the objectID
-			var result result
-			err := collection.FindOne(context.TODO(), DbEvent.DocumentKey).Decode(&result)
-			if err != nil {
-				log.Fatal(err)
-			}
-			// Convert changd MongoDB document from BSON to JSON
-			data, writeErr := bson.MarshalExtJSON(result, false, false)
-			if writeErr != nil {
-				log.Fatal(writeErr)
-			}
-			// Print the changed document in JSON format
-			fmt.Println(string(data))
-			fmt.Println("")
-		}
-		if DbEvent.OperationType == "delete" {
-			// Find the mongodb document based on the objectID
-			var result result
-			err := collection.FindOne(context.TODO(), DbEvent.DocumentKey).Decode(&result)
-			if err != nil {
-				log.Fatal(err)
-			}
-			// Convert changd MongoDB document from BSON to JSON
-			data, writeErr := bson.MarshalExtJSON(result, false, false)
-			if writeErr != nil {
-				log.Fatal(writeErr)
-			}
-			// Print the changed document in JSON format
-			fmt.Println(string(data))
-			fmt.Println("")
-		}
+		// if DbEvent.OperationType == "insert" || DbEvent.OperationType == "update" {
+		// 	// Find the mongodb document based on the objectID
+		// 	var result result
+		// 	err := collection.FindOne(context.TODO(), DbEvent.DocumentKey).Decode(&result)
+		// 	if err != nil {
+		// 		log.Fatal(err)
+		// 	}
+		// 	// Convert changd MongoDB document from BSON to JSON
+		// 	data, writeErr := bson.MarshalExtJSON(result, false, false)
+		// 	if writeErr != nil {
+		// 		log.Fatal(writeErr)
+		// 	}
+		// 	// Print the changed document in JSON format
+		// 	fmt.Println(string(data))
+		// 	fmt.Println("")
+		// }
+		// if DbEvent.OperationType == "delete" {
+		// 	// Find the mongodb document based on the objectID
+		// 	var result result
+		// 	err := collection.FindOne(context.TODO(), DbEvent.DocumentKey).Decode(&result)
+		// 	if err != nil {
+		// 		log.Fatal(err)
+		// 	}
+		// 	// Convert changd MongoDB document from BSON to JSON
+		// 	data, writeErr := bson.MarshalExtJSON(result, false, false)
+		// 	if writeErr != nil {
+		// 		log.Fatal(writeErr)
+		// 	}
+		// 	// Print the changed document in JSON format
+		// 	fmt.Println(string(data))
+		// 	fmt.Println("")
+		// }
 	}
 }
 
@@ -129,8 +128,11 @@ func main() {
 	// 	FullDocumentBeforeChange: options.ChangeStream().FullDocumentBeforeChange,
 	// })
 
-	opts := options.ChangeStream().SetFullDocumentBeforeChange(options.WhenAvailable)
-	stream, err := collection.Watch(context.TODO(), mongo.Pipeline{}, opts)
+	stream, err := collection.Watch(
+		context.TODO(),
+		mongo.Pipeline{},
+		options.ChangeStream().SetFullDocumentBeforeChange(options.WhenAvailable),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -177,16 +179,6 @@ func insertRecord(collection *mongo.Collection) {
 		GameState:  GameState[rand.Intn(len(GameState))],
 	}
 	_, err := collection.InsertOne(context.TODO(), item)
-	if err != nil {
-		log.Fatal(err)
-	}
-	item1 := result{
-		ID:         primitive.NewObjectID(),
-		UserID:     strconv.Itoa(rand.Intn(10000)),
-		DeviceType: DeviceType[rand.Intn(len(DeviceType))],
-		GameState:  GameState[rand.Intn(len(GameState))],
-	}
-	_, err = collection.InsertOne(context.TODO(), item1)
 	if err != nil {
 		log.Fatal(err)
 	}
